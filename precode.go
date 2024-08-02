@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -55,7 +56,10 @@ func getTasks(w http.ResponseWriter, r *http.Request) {
 	// так как все успешно, то статус OK
 	w.WriteHeader(http.StatusOK)
 	// записываем сериализованные в JSON данные в тело ответа
-	w.Write(resp)
+	_, err2 := w.Write(resp)
+	if err2 != nil {
+		log.Println(err2)
+	}
 }
 func getTasksId(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
@@ -89,6 +93,11 @@ func postTasks(w http.ResponseWriter, r *http.Request) {
 
 	if err = json.Unmarshal(buf.Bytes(), &task); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	if task.ID == tasks[task.ID].ID {
+		http.Error(w, "Задача с таким ID уже существует", http.StatusConflict)
 		return
 	}
 
