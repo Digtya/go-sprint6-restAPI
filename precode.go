@@ -56,9 +56,9 @@ func getTasks(w http.ResponseWriter, r *http.Request) {
 	// так как все успешно, то статус OK
 	w.WriteHeader(http.StatusOK)
 	// записываем сериализованные в JSON данные в тело ответа
-	_, err2 := w.Write(resp)
-	if err2 != nil {
-		log.Println(err2)
+	_, err = w.Write(resp)
+	if err != nil {
+		log.Println(err)
 	}
 }
 func getTasksId(w http.ResponseWriter, r *http.Request) {
@@ -66,7 +66,7 @@ func getTasksId(w http.ResponseWriter, r *http.Request) {
 
 	task, ok := tasks[id]
 	if !ok {
-		http.Error(w, "Задача не найдена", http.StatusNoContent)
+		http.Error(w, "Задача не найдена", http.StatusBadRequest)
 		return
 	}
 
@@ -78,7 +78,10 @@ func getTasksId(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	w.Write(resp)
+	_, err = w.Write(resp)
+	if err != nil {
+		log.Println(err)
+	}
 }
 
 func postTasks(w http.ResponseWriter, r *http.Request) {
@@ -96,8 +99,8 @@ func postTasks(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if task.ID == tasks[task.ID].ID {
-		http.Error(w, "Задача с таким ID уже существует", http.StatusConflict)
+	if _, exists := tasks[task.ID]; exists {
+		http.Error(w, "Задача с таким ID уже существует", http.StatusBadRequest)
 		return
 	}
 
@@ -105,22 +108,22 @@ func postTasks(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
-	w.Write([]byte("OK"))
+
 }
 
 func deleteTasks(w http.ResponseWriter, r *http.Request) {
 
+	w.Header().Set("Content-Type", "application/json")
 	id := chi.URLParam(r, "id")
 	task, ok := tasks[id]
 	if !ok {
-		http.Error(w, "Задача не найдена", http.StatusNoContent)
+		http.Error(w, "Задача не найдена", http.StatusBadRequest)
 		return
 	}
 
 	delete(tasks, task.ID)
-	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-	w.Write([]byte("OK"))
+
 }
 
 func main() {
